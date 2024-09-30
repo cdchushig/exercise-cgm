@@ -112,9 +112,9 @@ def repeated_evaluation(classifier_name: str, tabdf_later: pd.DataFrame, selecte
             # plt.savefig(name_sum, bbox_inches='tight')
 
         elif classifier_name == 'lr':
-            dict_param_grid_classifier = {'penalty': ['l1', 'l2', 'elasticnet', None]}
+            dict_param_grid_classifier = {'penalty': ['l2', 'elasticnet', None]}
             grid = GridSearchCV(
-                LogisticRegression(random_state=seed_value),
+                LogisticRegression(random_state=seed_value, solver='liblinear'),
                 dict_param_grid_classifier,
                 cv=loo,
                 scoring='accuracy',
@@ -201,8 +201,8 @@ tabdf_later = tabdf.copy()
 selectedvar = ["FullAdverse", "DawnMedian", "DawnSumValues", "DawnVar", "NightMedian", "AftVar", "NightHyper",
                "DawnHypo", "MorningEntropy", "MorningHypo", "NightHypo"]
 
-repeated_evaluation('lr', tabdf_later.copy(), selectedvar)
-repeated_evaluation('svm', tabdf_later.copy(), selectedvar)
+# repeated_evaluation('lr', tabdf_later.copy(), selectedvar)
+# repeated_evaluation('svm', tabdf_later.copy(), selectedvar)
 repeated_evaluation('knn', tabdf_later.copy(), selectedvar)
 
 
