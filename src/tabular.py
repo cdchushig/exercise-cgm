@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import argparse
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split, LeaveOneOut, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -128,9 +129,16 @@ def train_several_partitions(x_features,
     return list_dict_metrics
 
 
+def parse_arguments(parser):
+    parser.add_argument('--n_jobs', default=1, type=int)
+    return parser.parse_args()
+
+
+cmd_parser = argparse.ArgumentParser(description='exercise clf')
+args = parse_arguments(cmd_parser)
+
 X, y = load_breast_cancer(return_X_y=True)
 
-n_jobs = 4
 loo = LeaveOneOut()
 list_total_metrics = []
 
@@ -142,7 +150,7 @@ for estimator_name in ['tabpfn']:
                                             cv=None,
                                             scoring='roc_auc',
                                             list_seed_values=[2, 4, 6, 7, 8],
-                                            n_jobs=n_jobs
+                                            n_jobs=args.n_jobs
                                             )
     save_metrics(list_metrics)
 
