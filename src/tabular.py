@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split, LeaveOneOut, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from lightgbm import LGBMClassifier
 import xgboost as xgb
+from sklearn.neural_network import MLPClassifier
 from tabpfn import TabPFNClassifier
 
 from evaluator import compute_classification_prestations
@@ -42,12 +43,14 @@ def get_clf_hyperparameters(classifier: str):
         }
         selected_clf = xgb.XGBClassifier()
 
-    elif classifier == 'lgb':
-        selected_clf = LGBMClassifier()
+    elif classifier == 'mlp':
+        selected_clf = MLPClassifier(max_iter=1000)
         param_grid = {
-            'num_leaves': [10, 31, 127],
-            'boosting_type': ['gbdt', 'rf'],
-            'learning rate': [0.1, 0.001, 0.003]
+            'hidden_layer_sizes': [(30, 20), (30, 10), (10,)],
+            'activation': ['tanh', 'relu'],
+            'solver': ['sgd', 'adam'],
+            'alpha': [0.0001, 0.05],
+            'learning_rate': ['constant', 'adaptive'],
         }
     elif classifier == 'rf':
         selected_clf = RandomForestClassifier()
@@ -71,6 +74,7 @@ def perform_clf(estimator_name: str,
                 y_train: np.array,
                 x_test: np.array,
                 y_test: np.array,
+                seed_value,
                 cv,
                 n_jobs=1,
                 ) -> dict:
@@ -93,6 +97,9 @@ def perform_clf(estimator_name: str,
     y_pred = best_clf.predict(x_test)
 
     dict_metrics = compute_classification_prestations(y_test, y_pred, np.unique(y_test))
+
+    dict_metrics['seed'] = seed_value
+    dict_metrics['estimator'] = estimator_name
 
     return dict_metrics
 
@@ -120,6 +127,7 @@ def train_several_partitions(x_features,
                                    y_train,
                                    x_test,
                                    y_test,
+                                   seed_value,
                                    cv,
                                    n_jobs=n_jobs
                                    )
@@ -131,6 +139,7 @@ def train_several_partitions(x_features,
 
 def parse_arguments(parser):
     parser.add_argument('--n_jobs', default=1, type=int)
+    parser.add_argument('--clf', default='rf', type=str)
     return parser.parse_args()
 
 
@@ -142,8 +151,7 @@ X, y = load_breast_cancer(return_X_y=True)
 loo = LeaveOneOut()
 list_total_metrics = []
 
-for estimator_name in ['tabpfn']:
-# for estimator_name in ['rf', 'xgb', 'lgb', 'tabpfn']:
+for estimator_name in ['rf', 'xgb', 'mlp', 'tabpfn']:
     list_metrics = train_several_partitions(X,
                                             y,
                                             estimator=estimator_name,
