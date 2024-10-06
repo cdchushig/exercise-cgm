@@ -66,7 +66,7 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
             'criterion': ['gini', 'entropy'],
             'min_samples_split': [2, 3, 4, 5, 6]
         }
-        selected_clf = DecisionTreeClassifier(random_state=seed)
+        selected_clf = DecisionTreeClassifier(random_state=seed_value)
     elif classifier == 'knn':
         param_grid = {
             'n_neighbors': range(1, 20, 2)
@@ -120,6 +120,7 @@ def perform_clf(estimator_name: str,
                 y_test: np.array,
                 seed_value,
                 cv,
+                type_features,
                 n_jobs=1,
                 ) -> dict:
 
@@ -142,6 +143,7 @@ def perform_clf(estimator_name: str,
 
     dict_metrics['seed'] = seed_value
     dict_metrics['estimator'] = estimator_name
+    dict_metrics['features'] = type_features
 
     return dict_metrics
 
@@ -202,6 +204,7 @@ def train_several_partitions(df_data,
                                    y_test,
                                    idx,
                                    loo,
+                                   type_features,
                                    n_jobs=n_jobs
                                    )
 
