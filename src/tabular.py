@@ -51,7 +51,7 @@ def save_metrics(list_total_metrics: list):
     df_metrics.to_csv(csv_pathfile, index=False)
 
 
-def get_clf_hyperparameters(classifier: str, seed_value: int):
+def get_clf_hyperparameters(classifier: str, seed_value: int, n_vars: int):
     selected_clf = None
     param_grid = {}
 
@@ -62,9 +62,9 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
         selected_clf = LogisticRegression(max_iter=MAX_ITERS, random_state=seed_value, solver='liblinear')
     elif classifier == 'dt':
         param_grid = {
-            'max_depth': range(3, 20),
+            'max_depth': range(3, 20, 1),
             'criterion': ['gini', 'entropy'],
-            'min_samples_split': [2, 3, 4, 5, 6]
+            'min_samples_split': [2, 3, 4, 5, 6, 7, 8]
         }
         selected_clf = DecisionTreeClassifier(random_state=seed_value)
     elif classifier == 'knn':
@@ -80,7 +80,7 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
         selected_clf = SVC(max_iter=MAX_ITERS, random_state=seed_value, probability=True)
     elif classifier == 'xgb':
         param_grid = {
-            'max_depth': [3, 5, 7],
+            'max_depth': range(1, 16, 1),
             'learning_rate': [0.1, 0.01, 0.001],
             'subsample': [0.5, 0.7, 1],
             'n_estimators': [10, 20, 30, 40]
@@ -88,9 +88,9 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
         selected_clf = xgb.XGBClassifier()
 
     elif classifier == 'mlp':
-        selected_clf = MLPClassifier(max_iter=1000)
+        selected_clf = MLPClassifier(max_iter=3000)
         param_grid = {
-            'hidden_layer_sizes': [(30, 20), (30, 10), (10,)],
+            'hidden_layer_sizes': [(n_vars, 4), (n_vars, 2), (n_vars,)],
             'activation': ['tanh', 'relu'],
             'solver': ['sgd', 'adam'],
             'alpha': [0.0001, 0.05],
@@ -98,7 +98,6 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
         }
     elif classifier == 'rf':
         selected_clf = RandomForestClassifier()
-
         param_grid = {
             'n_estimators': [10, 20, 30, 40],
             'max_depth': range(1, 16, 2),
@@ -121,10 +120,12 @@ def perform_clf(estimator_name: str,
                 seed_value,
                 cv,
                 type_features,
+                device,
                 n_jobs=1,
                 ) -> dict:
 
-    clf, param_grid = get_clf_hyperparameters(estimator_name, seed_value)
+    n_vars = x_train.shape[1]
+    clf, param_grid = get_clf_hyperparameters(estimator_name, seed_value, n_vars)
 
     print('estimator: {}, params: {}'.format(estimator_name, param_grid))
 
@@ -144,6 +145,7 @@ def perform_clf(estimator_name: str,
     dict_metrics['seed'] = seed_value
     dict_metrics['estimator'] = estimator_name
     dict_metrics['features'] = type_features
+    dict_metrics['device'] = device
 
     return dict_metrics
 
@@ -178,6 +180,7 @@ def scale_data(X_train, y_train, X_test, y_test):
 
 def train_several_partitions(df_data,
                              type_features,
+                             device,
                              estimator,
                              scoring,
                              list_seed_values=None,
@@ -205,6 +208,7 @@ def train_several_partitions(df_data,
                                    idx,
                                    loo,
                                    type_features,
+                                   device,
                                    n_jobs=n_jobs
                                    )
 
@@ -260,6 +264,7 @@ list_total_metrics = []
 for estimator_name in ['lr', 'dt', 'knn', 'svm', 'rf', 'xgb', 'mlp', 'tabpfn']:
     list_dict_metrics = train_several_partitions(df_data,
                                                  args.features,
+                                                 args.device,
                                                  estimator=estimator_name,
                                                  scoring='accuracy',
                                                  list_seed_values=[2, 4, 6, 7, 8],
