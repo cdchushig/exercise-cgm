@@ -10,8 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import LeaveOneOut, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 import xgboost as xgb
-from pytorch_tabnet.tab_model import TabNetClassifier
 from tabpfn import TabPFNClassifier
 from loader import load_preprocessed_dataset
 from evaluator import compute_classification_prestations
@@ -60,6 +60,13 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
             'C': np.linspace(0.01, 10),
         }
         selected_clf = LogisticRegression(max_iter=MAX_ITERS, random_state=seed_value, solver='liblinear')
+    elif classifier == 'dt':
+        param_grid = {
+            'max_depth': range(3, 20),
+            'criterion': ['gini', 'entropy'],
+            'min_samples_split': [2, 3, 4, 5, 6]
+        }
+        selected_clf = DecisionTreeClassifier(random_state=seed)
     elif classifier == 'knn':
         param_grid = {
             'n_neighbors': range(1, 20, 2)
@@ -68,7 +75,7 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
     elif classifier == 'svm':
         param_grid = {
             'C': np.linspace(0.01, 10),
-            'gamma': [1e-2, 1e-3, 1e-4, 1e-5]
+            'gamma': [1e-2, 1e-3, 1e-4, 1e-5],
         }
         selected_clf = SVC(max_iter=MAX_ITERS, random_state=seed_value, probability=True)
     elif classifier == 'xgb':
@@ -76,7 +83,7 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
             'max_depth': [3, 5, 7],
             'learning_rate': [0.1, 0.01, 0.001],
             'subsample': [0.5, 0.7, 1],
-            'n_estimators': [20, 30, 40, 50]
+            'n_estimators': [10, 20, 30, 40]
         }
         selected_clf = xgb.XGBClassifier()
 
@@ -93,16 +100,11 @@ def get_clf_hyperparameters(classifier: str, seed_value: int):
         selected_clf = RandomForestClassifier()
 
         param_grid = {
-            'n_estimators': [5, 10, 20],
+            'n_estimators': [10, 20, 30, 40],
             'max_depth': range(1, 16, 2),
         }
     elif classifier == 'tabpfn':
         selected_clf = TabPFNClassifier(device='cpu', N_ensemble_configurations=32)
-        param_grid = {
-            'N_ensemble_configurations': [16, 32]
-        }
-    elif classifier == 'tabnet':
-        selected_clf = TabNetClassifier()
         param_grid = {
             'N_ensemble_configurations': [16, 32]
         }
@@ -252,8 +254,7 @@ df_data = load_preprocessed_dataset(args.device)
 
 list_total_metrics = []
 
-# for estimator_name in ['rf', 'xgb', 'mlp', 'tabpfn']:
-for estimator_name in ['svm']:
+for estimator_name in ['lr', 'dt', 'knn', 'svm', 'rf', 'xgb', 'mlp', 'tabpfn']:
     list_dict_metrics = train_several_partitions(df_data,
                                                  args.features,
                                                  estimator=estimator_name,
