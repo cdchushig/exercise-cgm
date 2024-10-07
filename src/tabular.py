@@ -262,8 +262,7 @@ df_data = load_preprocessed_dataset(args.device)
 
 list_total_metrics = []
 
-# for estimator_name in ['lr', 'dt', 'knn', 'svm', 'rf', 'xgb', 'mlp', 'tabpfn']:
-for estimator_name in ['tabpfn']:
+for estimator_name in ['lr', 'dt', 'knn', 'svm', 'rf', 'xgb', 'mlp', 'tabpfn']:
     list_dict_metrics = train_several_partitions(df_data,
                                                  args.features,
                                                  args.device,
