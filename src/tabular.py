@@ -75,7 +75,7 @@ def get_clf_hyperparameters(classifier: str, seed_value: int, n_vars: int):
     elif classifier == 'svm':
         param_grid = {
             'C': np.linspace(0.01, 10),
-            'gamma': [1e-2, 1e-3, 1e-4, 1e-5],
+            'gamma': [0.01, 0.001, 0.0001, 0.00001],
         }
         selected_clf = SVC(max_iter=MAX_ITERS, random_state=seed_value, probability=True)
     elif classifier == 'xgb':
@@ -105,7 +105,8 @@ def get_clf_hyperparameters(classifier: str, seed_value: int, n_vars: int):
     elif classifier == 'tabpfn':
         selected_clf = TabPFNClassifier(device='cpu', N_ensemble_configurations=32)
         param_grid = {
-            'N_ensemble_configurations': [16, 32]
+            'N_ensemble_configurations': [16, 32],
+            'batch_size_inference': [20, 30]
         }
 
     return selected_clf, param_grid
@@ -261,7 +262,8 @@ df_data = load_preprocessed_dataset(args.device)
 
 list_total_metrics = []
 
-for estimator_name in ['lr', 'dt', 'knn', 'svm', 'rf', 'xgb', 'mlp', 'tabpfn']:
+# for estimator_name in ['lr', 'dt', 'knn', 'svm', 'rf', 'xgb', 'mlp', 'tabpfn']:
+for estimator_name in ['tabpfn']:
     list_dict_metrics = train_several_partitions(df_data,
                                                  args.features,
                                                  args.device,
